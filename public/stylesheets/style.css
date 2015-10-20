@@ -1,0 +1,115 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:300&subset=latin,greek,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic);
+
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+table {
+    border-collapse: collapse;
+    border: 2px black solid;
+    font: 12px sans-serif;
+}
+
+td {
+    border: 1px black solid;
+    padding: 5px;
+}
+
+/*============ Login Page ==================*/
+
+#login-page {
+
+  background-color: #EAEAEA;
+
+}
+
+.centered { 
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+}
+
+.form-group {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.txtInput {
+  margin-top: 18px;
+  margin-bottom: 15px;
+}
+
+#login-form input{ 
+
+  font-family: 'Roboto', sans-serif;
+  background-color: #EAEAEA;
+  text-align: center;
+  color: black;
+  font-size: 18px;
+  border: 1px solid black;
+  line-height: 2em;
+
+}
+
+#login-form input[type="submit"] {
+  color: #EAEAEA;
+  background-color: #399ECC;
+  width: 6em;
+}
+
+#login-form input[type="submit"]:hover {
+
+  background-color: white;
+  border: 1px solid #399ECC;
+  cursor: pointer;
+  color: black;
+}
+
+.btnLogin {
+  margin-top: 18px;
+}
+
+
+#login-form input:focus {
+  outline: #EAEAEA;
+}
+
+#forgot-password-link {
+  position: absolute;
+  width: 200px;
+  margin-top: -2em;
+  /* text-align: left; */
+  margin-left: 6em;
+}
+
+#forgot-password-link a { 
+  text-decoration: none;
+  color: #399ECC;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+}
+
+
+::-webkit-input-placeholder {
+   color: #399ECC;
+}
+
+:-moz-placeholder { /* Firefox 18- */
+   color: #399ECC;  
+}
+
+::-moz-placeholder {  /* Firefox 19+ */
+   color: #399ECC;  
+}
+
+:-ms-input-placeholder {  
+   color: #399ECC;  
+}
+
