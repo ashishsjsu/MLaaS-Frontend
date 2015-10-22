@@ -2,31 +2,124 @@
 <html>
   <head>
     <title><%= title %></title>
+    <!--Load jQuery-->
     <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    
+    <link rel='stylesheet' href='/stylesheets/index.css' />
+    <!-- Load javascript code -->
     <script src="javascripts/index.js" type="text/javascript"></script>
   </head>
+
   <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
 
-    <section>
-    	<input type="file" id="file_input" name="datafile">
-    	<img src="images/up-loader.gif" alt="" id="loadergif" />
-    	<p id="status">Please select a file</p>
+    <div class="main-container">
+      <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+          <!-- Brand and toggle get grouped for better mobile display -->
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Brand</a>
+          </div>
 
-    	<progress id="uploadProgress" min="0" max="100" value="0">0% Complete</progress>
+          <!-- Collect the nav links, forms, and other content for toggling -->
+          <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+              <li class="active"><a href="#">Link <span class="sr-only">(current)</span></a></li>
+              <li><a href="#">Link</a></li>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#">Action</a></li>
+                  <li><a href="#">Another action</a></li>
+                  <li><a href="#">Something else here</a></li>
+                  <li role="separator" class="divider"></li>
+                  <li><a href="#">Separated link</a></li>
+                  <li role="separator" class="divider"></li>
+                  <li><a href="#">One more separated link</a></li>
+                </ul>
+              </li>
+            </ul>
+            <form class="navbar-form navbar-left" role="search">
+              <div class="form-group">
+                <input type="text" class="form-control" placeholder="Search">
+              </div>
+              <button type="submit" class="btn btn-default">Submit</button>
+            </form>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="#">Link</a></li>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#">Action</a></li>
+                  <li><a href="#">Another action</a></li>
+                  <li><a href="#">Something else here</a></li>
+                  <li role="separator" class="divider"></li>
+                  <li><a href="#">Separated link</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+      </nav>  
 
-      <input type="text" id="file-name" />
-      <input type="button" id="show-contents" value="Show" />
-    </section>
+      <div id="container">
+      	<!--<input type="file" id="file_input" name="datafile">
+      	<img src="images/up-loader.gif" alt="" id="loadergif" />
+      	<p id="status">Please select a file</p>
 
-    <table id="data-table"></table>
+      	<progress id="uploadProgress" min="0" max="100" value="0">0% Complete</progress>
 
-        <!--Form for logout-->
-    <form method="get" action="/logout">
-      <input type="submit" value="logout" id="logout" onclick="clearSession()">
-    </form>
+        <input type="text" id="file-name" />
+        <input type="button" id="show-contents" value="Show" />
+
+        <table id="data-table"></table>
+
+            
+        <form method="get" action="/logout">
+          <input type="submit" value="logout" id="logout" onclick="clearSession()">
+        </form> -->
+
+        <nav class="sidebar sidebar-menu-collapsed">
+          <a href="" id="justify-icon">
+            <span class="glyphicon glyphicon-align-justify"></span>
+          </a>
+
+          <ul class="level1">
+            <li class="active">
+              <a href="#" class="expandable" title="Dashboard">
+                <span class="glyphicon glyphicon-home collapsed-element"></span>
+                <span class="expanded-element">Dashboard</span>
+              </a>
+            </li>
+            <li class="workspace">
+              <a href="#" class="expandable" title="My Workspace">
+                <span class="glyphicon glyphicon-th-large collapsed-element"></span>
+                <span class="expanded-element">My Workspace</span>
+              </a>
+
+                <ul class="level2">
+                  <li><a class="expandable" href="">A</li></a>
+                </ul>
+
+                <details>
+                  <summary>Datasets</summary>
+                </details>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div><!-- main-container -->
 
     <!-- Get the d3.js -->
     <script src="http://d3js.org/d3.v3.min.js"></script>

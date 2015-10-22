@@ -1,27 +1,72 @@
 // add event listeners as soon as DOM is ready
-/*window.onload = function(){
-
-	console.log("Hello");
-	$('#file_input').addEventListener('change', initiateUpload);
-	$('#loadergif').style.visibility = "hidden";
-	$('#show-contents').addEventListener('click', initiateDownload);
-}*/
-
 $( document ).ready(function(){
 	console.log("Hello");
 	$('#file_input').on('change', initiateUpload);
 	$('#loadergif').css("visibility", "hidden")	;
 	$('#show-contents').on('click', initiateDownload);
-
 	getCurrentUser();
+
+	//create an independent sidebar object to handle sidebar operations
+	var sideBar;
+	sideBar = (function(){
+
+		function sideBar(){}
+
+		sideBar.prototype.expandMenu = function(){
+			return $("nav.sidebar").removeClass("sidebar-menu-collapsed").addClass("sidebar-menu-expanded");
+		};
+
+		sideBar.prototype.collapseMenu = function(){
+			return $("nav.sidebar").removeClass("sidebar-menu-expanded").addClass("sidebar-menu-collapsed");
+		};
+
+		sideBar.prototype.showMenuTexts = function(){
+			return $("nav.sidebar ul a span.expanded-element").show();
+		};
+
+		sideBar.prototype.hideMenuTexts = function(){
+			return $("nav.sidebar ul a span.expanded-element").hide();
+		};
+
+		sideBar.prototype.showWorkspaceSubMenu = function(){
+			$("li.workspace ul.level2").show();
+			return $("li.workspace a.expandable").css({
+				width: "100%"
+			});
+		}
+
+		sideBar.prototype.hideWorkspaceSubMenu = function(){
+			return $("li.workspace ul.level2").hide();
+		}
+
+		sideBar.prototype.install = function(){
+			return (function(instance){
+				return $("#justify-icon").click(function(e){
+
+					if ($(this).parent("nav.sidebar").hasClass("sidebar-menu-collapsed")){
+						instance.expandMenu();
+						instance.showMenuTexts();
+						instance.showWorkspaceSubMenu();
+					}
+					else if ($(this).parent("nav.sidebar").hasClass("sidebar-menu-expanded")) {
+						instance.collapseMenu();
+						instance.hideMenuTexts();
+						instance.hideWorkspaceSubMenu();
+					}
+
+					return false;
+				});
+			})(this);
+		};
+
+		return sideBar;
+
+	})();
+
+	return (new sideBar).install();
 });
 
-
-function clearSession(){
-	alert("Cleared");
-	sessionStorage.clear();
-}
-
+//get the current user info from the node-passport session
 function getCurrentUser(){
 	$.get("/user/sessionInfo", function(data, status, xhr){
 		console.log(data.user.username);
@@ -32,6 +77,12 @@ function getCurrentUser(){
 	});
 }
 
+//clear session storage
+function clearSession(){
+	sessionStorage.clear();
+}
+
+//get session data from session storage
 function getSession(){
 	var username = sessionStorage.getItem('username');
 	var email = sessionStorage.getItem('email');
@@ -42,6 +93,7 @@ function getSession(){
 	return user;
 }
 
+//set the session data in session storage
 function setSession(data){
 	sessionStorage.setItem("username", data.user.username);
 	sessionStorage.setItem("email", data.user.email);
@@ -106,6 +158,7 @@ function upload_file(file, response){
             $('#loadergif').css("visibility", "hidden");
             //Todo: get the file name from the UI
 			displayFormattedContent("device_ip.csv");
+			//updateUserFiles(file.name);
         }
     };
     xhr.onerror = function() {
@@ -140,7 +193,7 @@ function download_file(file){
 	xhr.send();
 }
 
-
+//track the uload progress of the file being uploaded to the AWS S3
 function trackUploadProgress(event){
 	
 	var progressBar = $('#uploadProgress');
@@ -152,6 +205,7 @@ function trackUploadProgress(event){
 	}
 }
 
+// display the csv file contents as a table
 function displayFormattedContent(file){
 
 	 var file_url = "https://cmpe295b-sjsu-bigdatasecurity.s3.amazonaws.com/"+file;
