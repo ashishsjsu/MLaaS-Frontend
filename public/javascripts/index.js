@@ -1,71 +1,20 @@
-// add event listeners as soon as DOM is ready
+'use strict'
+// add event listeners as soon as the DOM is ready
 $( document ).ready(function(){
-	console.log("Hello");
-	$('#file_input').on('change', initiateUpload);
-	$('#loadergif').css("visibility", "hidden")	;
-	$('#show-contents').on('click', initiateDownload);
+	console.log("READY");
+	$('#fileupload').on('change', initiateUpload);
+	$('.icon-refresh').on('click', refreshFilesList);
+	//$('#fileupload').on('click', resetUploader);
+	//$('#loadergif').css("visibility", "hidden")	;
+	//$('#show-contents').on('click', initiateDownload);
 	getCurrentUser();
+	refreshFilesList();
 
-	//create an independent sidebar object to handle sidebar operations
-	var sideBar;
-	sideBar = (function(){
-
-		function sideBar(){}
-
-		sideBar.prototype.expandMenu = function(){
-			return $("nav.sidebar").removeClass("sidebar-menu-collapsed").addClass("sidebar-menu-expanded");
-		};
-
-		sideBar.prototype.collapseMenu = function(){
-			return $("nav.sidebar").removeClass("sidebar-menu-expanded").addClass("sidebar-menu-collapsed");
-		};
-
-		sideBar.prototype.showMenuTexts = function(){
-			return $("nav.sidebar ul a span.expanded-element").show();
-		};
-
-		sideBar.prototype.hideMenuTexts = function(){
-			return $("nav.sidebar ul a span.expanded-element").hide();
-		};
-
-		sideBar.prototype.showWorkspaceSubMenu = function(){
-			$("li.workspace ul.level2").show();
-			return $("li.workspace a.expandable").css({
-				width: "100%"
-			});
-		}
-
-		sideBar.prototype.hideWorkspaceSubMenu = function(){
-			return $("li.workspace ul.level2").hide();
-		}
-
-		sideBar.prototype.install = function(){
-			return (function(instance){
-				return $("#justify-icon").click(function(e){
-
-					if ($(this).parent("nav.sidebar").hasClass("sidebar-menu-collapsed")){
-						instance.expandMenu();
-						instance.showMenuTexts();
-						instance.showWorkspaceSubMenu();
-					}
-					else if ($(this).parent("nav.sidebar").hasClass("sidebar-menu-expanded")) {
-						instance.collapseMenu();
-						instance.hideMenuTexts();
-						instance.hideWorkspaceSubMenu();
-					}
-
-					return false;
-				});
-			})(this);
-		};
-
-		return sideBar;
-
-	})();
-
-	return (new sideBar).install();
+	$('.btnStats').attr('disabled', 'disabled');
 });
 
+
+/* =========================== User login session retrieval ============================= */
 //get the current user info from the node-passport session
 function getCurrentUser(){
 	$.get("/user/sessionInfo", function(data, status, xhr){
@@ -79,6 +28,7 @@ function getCurrentUser(){
 
 //clear session storage
 function clearSession(){
+	alert("HYYY");
 	sessionStorage.clear();
 }
 
@@ -99,12 +49,22 @@ function setSession(data){
 	sessionStorage.setItem("email", data.user.email);
 }
 
+/* ===================================== File uploader ==================================== */
+
+function resetUploader(){
+	$('#progress .progress-bar').css(
+        'width', 0 + '%'
+    );
+    $('#files').html('');
+    //re bind the event bcz above code will rerender the html causing the event to be removed from the element
+    $('#fileupload').on('change', initiateUpload);   
+}
+
 // this is event handler for upload feature, invoked when a file is selected from the filesystem
 function initiateUpload(){
 
 	console.log("File upload initiated");
-	var files = $('#file_input')[0].files;
-	console.log(files);
+	var files = $('#fileupload')[0].files;
 	var file = files[0];
 	if(file == null){
 		alert("No file selected");
@@ -122,11 +82,9 @@ function get_signed_request(file, flag){
 	xhr.open('GET', backend_url);
 	xhr.onreadystatechange = function(){
 
-		console.log(xhr.readyState);
-		console.log(xhr.status);
 		if(xhr.readyState === 4 && xhr.status === 200){
 			var response = JSON.parse(xhr.responseText);
-			console.log(response);
+			
 			//initiate file upload via browser once request has been signed
 			if(flag === 0){
 				upload_file(file, response);
@@ -136,7 +94,7 @@ function get_signed_request(file, flag){
 			}
 		}
 		else{
-			alert("Could not sign the request. Try again.");
+			//alert("Could not sign the request. Try again.");
 		}
 	};
 	xhr.send();
@@ -144,10 +102,9 @@ function get_signed_request(file, flag){
 
 //actual fuction to upload file to S3, needs a file and pre-signed url
 function upload_file(file, response){
+
     var xhr = new XMLHttpRequest();
-
     xhr.upload.addEventListener('progress', trackUploadProgress);
-
     xhr.open("PUT", response.signed_request);
     // the file is publically downloadable
     xhr.setRequestHeader('x-amz-acl', 'public-read');
@@ -155,20 +112,126 @@ function upload_file(file, response){
     	//if file upload request is completed successfully
         if (xhr.status === 200) {
             alert("File upload complete");
-            $('#loadergif').css("visibility", "hidden");
+            //$('#loadergif').css("visibility", "hidden");
             //Todo: get the file name from the UI
-			displayFormattedContent("device_ip.csv");
+			displayFormattedContent(file.name);
 			//updateUserFiles(file.name);
+			updateUserFiles(file);
         }
     };
     xhr.onerror = function() {
         alert("Could not upload file.");
     };
     xhr.send(file);
-    $('#loadergif').css("visibility", "visible");
+
+    list_files(file);
+    //$('#loadergif').css("visibility", "visible");
 }
 
-// this function is meant to invoke the getsigned_reqest method with proper parameters to download a given file
+//track the uload progress of the file being uploaded to the AWS S3
+function trackUploadProgress(data){
+	
+	var progressBar = $('#uploadProgress');
+	if(event.lengthComputable){
+		var progress = parseInt(data.loaded / data.total * 100, 10);
+        $('#progress .progress-bar').css(
+            'width',
+            progress + '%'
+        );
+	}
+}
+
+function list_files(file){
+	$('<p/>').text(file.name).appendTo($('#files'));
+}
+
+/* ================================= Sidebar functionality =================================== */
+
+function updateUserFiles(file){
+
+	alert(file.name + " " + file.type);
+	var data = {
+		username: sessionStorage.getItem('username'),
+		filename: file.name,
+		//fileurl : fileurl,
+		date: new Date()
+	}
+	$.ajax({
+		type: 'POST',
+		url: '/files',
+		data: data,
+		// use this to something like a loading image
+		//beforeSend:		
+	  success: function(data){
+	  	alert("File saved");
+	  	refreshFilesList();
+	  },
+	  error: function(){
+	  	alert("Error in mongodb save");
+	  }
+	});
+}
+
+function refreshFilesList() {
+	$('ul.treeview-menu li').remove();
+	$.getJSON('/files/'+sessionStorage.getItem('username'))
+	.done(function(data) {
+		
+		//refresh the list only if number of li elements is not equal to number of files in the object
+		if($('ul.treeview-menu li').size() < data.message[0].files.length) {
+				$.each(data.message[0].files, function(i, item) {
+				
+				//dynamically append a list of files to tree view menu
+				var li = '<li><a href="#">' + item.filename + '</a>';
+				$('ul.menu-open').append(li);
+			});
+		}
+	})
+	.fail(function(err) {
+		console.log(err);
+	})
+	.always(function(){
+		console.log('Completed');
+		//attach event on newly created li elements
+		$('#fileslist li a').on('click', showFileSample);
+	})
+}
+
+function showFileSample(event) {
+	console.log(event.target.innerHTML);
+	displayFormattedContent(event.target.innerHTML);
+}
+
+
+/* ===================================  Show file contents ==================================== */
+
+// display the csv file contents as a table
+function displayFormattedContent(file){
+
+	//clear existing data
+	$('.data-table tbody tr').remove();
+
+	var file_url = "https://cmpe295b-sjsu-bigdatasecurity.s3.amazonaws.com/"+file;
+	alert("Displaying the data " + file);
+
+	d3.text(file_url, function(data) {
+            var parsedCSV = d3.csv.parseRows(data);
+            var container = d3.select("#data-table").select('tbody')
+
+                .selectAll("tr")
+                    .data(parsedCSV).enter()
+                    .append("tr")
+
+                .selectAll("td")
+                    .data(function(d) { return d; }).enter()
+                    .append("td")
+                    .text(function(d) { return d; });
+
+        $('#data-table tr:first').css("color", "red");  
+    });
+}
+
+/*// this function is meant to invoke the getsigned_reqest method with proper parameters to download a given file
 function initiateDownload(){
 	var filename = $("#file-name").value;
 	download_file(filename);
@@ -192,41 +255,4 @@ function download_file(file){
 	}
 	xhr.send();
 }
-
-//track the uload progress of the file being uploaded to the AWS S3
-function trackUploadProgress(event){
-	
-	var progressBar = $('#uploadProgress');
-	if(event.lengthComputable){
-		var progressVal = (event.loaded / event.total) * 100;
-		console.log(progressVal);
-		progressBar.value = progressVal;
-		progressBar.textContent = progressBar.value;
-	}
-}
-
-// display the csv file contents as a table
-function displayFormattedContent(file){
-
-	 var file_url = "https://cmpe295b-sjsu-bigdatasecurity.s3.amazonaws.com/"+file;
-	 alert("Displaying the data");
-	
-	 d3.text(file_url, function(data) {
-                var parsedCSV = d3.csv.parseRows(data);
-
-                var container = d3.select("#data-table")
-
-                    .selectAll("tr")
-                        .data(parsedCSV).enter()
-                        .append("tr")
-
-                    .selectAll("td")
-                        .data(function(d) { return d; }).enter()
-                        .append("td")
-                        .text(function(d) { return d; });
-
-        console.log($('#data-table tr:first'));
-        $('#data-table tr:first').css("color", "red");
-    });
-
-}
+*/

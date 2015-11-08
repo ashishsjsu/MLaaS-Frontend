@@ -46,6 +46,11 @@ app.use('/users', users);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
+  console.log(req.user);
+  if (!req.user)
+        res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  next();
+
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
