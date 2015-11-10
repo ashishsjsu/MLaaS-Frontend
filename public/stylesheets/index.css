@@ -47,7 +47,7 @@ body {
 /**
 	Data table css
 */
-.data-table {
+.data-table, .task-history {
     border: 1px solid #dddddd;
     border-collapse: separate;
     border-left: 0;
@@ -56,12 +56,24 @@ body {
     border-radius: 4px;
 }
 
-#data-table td {
-	padding: 8px;
+.data-table td, .task-history td {
+	  padding: 8px;
     line-height: 20px;
     text-align: left;
     vertical-align: top;
     border-top: 1px solid #dddddd;
+}
+
+.task-history th, .data-table th {
+  text-align: center;
+}
+
+.task-history td, .data-table td {
+  text-align: center;
+}
+
+.task-history td:nth-child(3) {
+  color: #3c8dbc;
 }
 
 /**
@@ -72,7 +84,7 @@ body {
 }
 
 .icon-refresh:hover{
-  color: white;
+  color: #00c0ef;
 }
 
 .btnStats {
@@ -80,4 +92,11 @@ body {
     margin-bottom: 1em;
     font-size: 1.2em;
     font-weight: 600;
+}
+
+/**
+  Dropdown selector
+*/
+.datasource-select {
+  width: 70%;
 }

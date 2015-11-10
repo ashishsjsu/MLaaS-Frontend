@@ -3,14 +3,14 @@
 $( document ).ready(function(){
 	console.log("READY");
 	$('#fileupload').on('change', initiateUpload);
-	$('.icon-refresh').on('click', refreshFilesList);
+	$('.sidebar-menu i.icon-refresh').on('click', refreshFilesList);
 	//$('#fileupload').on('click', resetUploader);
 	//$('#loadergif').css("visibility", "hidden")	;
 	//$('#show-contents').on('click', initiateDownload);
 	getCurrentUser();
-	refreshFilesList();
-
 	$('.btnStats').attr('disabled', 'disabled');
+	// bind the list of data sources to the select element in statistics block
+	setTimeout(function(){bindDatasourceSelect()}, 3000);
 });
 
 
@@ -76,6 +76,7 @@ function initiateUpload(){
 
 // returns a pre-signed url for uploading the file to AWS S3
 function get_signed_request(file, flag){
+	console.log(file);
 	var xhr = new XMLHttpRequest();
 	var backend_url = "http://127.0.0.1:5000/upload/sign_s3?file_name="+file.name+"&file_type="+file.type;
 
@@ -113,8 +114,9 @@ function upload_file(file, response){
         if (xhr.status === 200) {
             alert("File upload complete");
             //$('#loadergif').css("visibility", "hidden");
-            //Todo: get the file name from the UI
-			displayFormattedContent(file.name);
+            
+            parsePartial(file);
+			//displayFormattedContent(file.name);
 			//updateUserFiles(file.name);
 			updateUserFiles(file);
         }
@@ -164,7 +166,8 @@ function updateUserFiles(file){
 		//beforeSend:		
 	  success: function(data){
 	  	alert("File saved");
-	  	refreshFilesList();
+	  	//refreshFilesList();
+	  	bindDatasourceSelect();
 	  },
 	  error: function(){
 	  	alert("Error in mongodb save");
@@ -172,11 +175,18 @@ function updateUserFiles(file){
 	});
 }
 
+// This ajax call returns a promise object, call done on the object to access returned data
+function getFileListPromise(){
+
+	return $.getJSON('/files/'+sessionStorage.getItem('username'));
+}
+
+// this function refreshes the list of files in the sidebar on index page
 function refreshFilesList() {
 	$('ul.treeview-menu li').remove();
-	$.getJSON('/files/'+sessionStorage.getItem('username'))
+	//$.getJSON('/files/'+sessionStorage.getItem('username'))
+	getFileListPromise()
 	.done(function(data) {
-		
 		//refresh the list only if number of li elements is not equal to number of files in the object
 		if($('ul.treeview-menu li').size() < data.message[0].files.length) {
 				$.each(data.message[0].files, function(i, item) {
@@ -197,11 +207,102 @@ function refreshFilesList() {
 	})
 }
 
+// this function displays the data in file when clicked on the file name in the sidebar
 function showFileSample(event) {
-	console.log(event.target.innerHTML);
 	displayFormattedContent(event.target.innerHTML);
 }
 
+/* ============================== Raw statistics block ============================ */
+
+// bind the list of files to the dropdown in the statistics box
+function bindDatasourceSelect() {
+
+	var totalItems = $('.datasource-select option').size();
+	getFileListPromise()
+	.done(function(data){
+		if(totalItems < data.message[0].files.length || totalItems === 1) {
+			
+			$.each(data.message[0].files, function(i, item){
+				
+				 $("#datasource-select").append($("<option></option>").val(item.filename).html(item.filename));
+			});
+		}
+	})
+	.fail(function(err){
+
+	})
+	.always(function(){
+
+	});
+}
+
+//handle select even on the data source select element in raw statistics block
+$('.datasource-select').change(function(){
+
+	var selected = $(this).find(':selected');
+	
+	if(selected.index() > 0) {
+		$('.btnStats').removeAttr('disabled');
+	}
+	else{
+		$('.btnStats').attr('disabled', 'disabled');	
+	}
+});
+
+// launch spark task to calculate raw data statistics
+$('.btnStats').click(function(){ createDataStatisticsTask() });
+
+// data statistics handler
+function createDataStatisticsTask() {
+
+	var filename = $('.datasource-select').find(':selected').val();
+	$.getJSON('/files/'+filename+'/statistics')
+	.done(function(data){
+		//the response here returns the taskname, task id and task status url
+		console.log(data);
+		//update the task history table here
+		updateTaskHistory(data);
+	})
+	.fail(function(data){
+		alert("Task creation failed");
+	})
+	.always(function(){
+		console.log('Completed');
+	})
+}
+
+/* =================================== Task History Block ===================================== */
+
+//refresh the list of tasks usinf refresh icon in task history block
+$('#refresh-history-icon').click(function() {
+
+	console.log($.getJSON('/tasks/'+sessionStorage.getItem('username')));
+	alert($.getJSON('/tasks/'+sessionStorage.getItem('username')));
+	//ToDo: complete This
+});
+
+//this is autoupdated when a new task is created
+function updateTaskHistory(data) {
+
+	console.log(Object.keys(data).length);
+	//make sure that the object has the task details - at least 2 values in json object
+	if(Object.keys(data).length >= 2) {
+
+		var taskname = '<td>' + data.taskname + '</td>';
+		var taskid = '<td>' + data.taskid + '</td>';
+		var taskstatusurl = '<td>' + data.statusurl + '</td>';
+		var created = '<td>' + getToday() + '</td>';
+		
+
+		/* var taskname = '<tr><td>' + 'taskname' + '</td>';
+		var taskid = '<td>' + 'taskid' + '</td>';
+		var taskstatusurl = '<td>' + 'taskstatusurl' + '</td></tr>'; */
+
+		var rows = '<tr>' + taskname + taskid + taskstatusurl + created + '</tr>';
+		//append row to the task history table
+		$('.task-history > tbody:last').append(rows);
+	}
+}
 
 /* ===================================  Show file contents ==================================== */
 
@@ -229,6 +330,68 @@ function displayFormattedContent(file){
 
         $('#data-table tr:first').css("color", "red");  
     });
+}
+
+/* ==================== Utility functions ===================== */
+
+function getToday(){
+
+	var today = new Date();
+	var date = today.getMonth() + "/" + today.getDate() + "/" + today.getYear() + " " + today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+
+	return date;
+}
+
+function parsePartial(fileobj) {
+	Papa.parse(fileobj, {
+			// base config to use for each file
+		preview: 10,
+		header: true,
+		before: function(file, inputElem)
+		{
+			// executed before parsing each file begins;
+			// what you return here controls the flow
+		},
+		error: function(err, file, inputElem, reason)
+		{
+			console.log(err);
+			console.log(reason);
+			// executed if an error occurs while loading the file,
+			// or if before callback aborted for some reason
+		},
+		complete: function(results)
+		{
+			//console.log(results);
+			populatePartialTable(results.meta.fields, results.data);
+			// executed after all files are complete
+		}
+	});
+}
+
+function populatePartialTable(headers, data) {
+
+	var thead = null;
+	var td = null;
+	var trow = '<tr>';
+
+	$.each(headers, function(i, item) { 
+		thead = thead + '<th>' + item + '</th>';
+	});
+
+	$('.data-table thead').append(thead);
+	
+	$.each(data, function(i, item){
+		console.log(item);
+		for(var j=0; j<headers.length; j++) {
+			td = '<td>' + item[headers[j]] + '</td>';
+			trow = trow + td;
+		}
+		trow = trow + '</tr>';
+		$('.data-table tbody').append(trow);
+		trow = '<tr>';		
+	});
+
+	//$('.data-table tbody').append(trow);
 }
 
 /*// this function is meant to invoke the getsigned_reqest method with proper parameters to download a given file
