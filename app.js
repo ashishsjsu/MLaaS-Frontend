@@ -7,10 +7,19 @@ var bodyParser = require('body-parser');
 var flash = require('connect-flash');
 var session = require('express-session');
 
+/* Configure the elasticseach client */
+var elasticsearch = require('elasticsearch');
+
+var client = new elasticsearch.Client({
+  host: 'localhost:9200',
+  log: 'trace'
+});
+
 //configure mongodb database
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://cmpe280:cmpe280@ds051843.mongolab.com:51843/user');
 require('./models/Person');
+require('./models/Files');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');

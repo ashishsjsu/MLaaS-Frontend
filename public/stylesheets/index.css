@@ -66,6 +66,7 @@ body {
 
 .task-history th, .data-table th {
   text-align: center;
+  padding: 4px;
 }
 
 .task-history td, .data-table td {

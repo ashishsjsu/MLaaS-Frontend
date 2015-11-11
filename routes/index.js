@@ -1,7 +1,10 @@
 var express = require('express');
 var mongoose = require('mongoose');
 var crypto = require("crypto");
+
 var PersonSchema = mongoose.model('Person');
+var FileSchema = mongoose.model('Files');
+
 var passport = require('passport');
 var unirest = require('unirest');
 
@@ -89,22 +92,60 @@ router.post('/files', function(req, res, next){
 	var file = req.body;
 	console.log(req.body);
 
-	var update = {'$push': {files: req.body }};
+	var columns = JSON.parse(req.body.columns);
 
-	PersonSchema.update({'username': req.body.username}, update, function(err, numAffected){
+	var update = {'$pushAll': { 'columns': columns }};
+	var query = {'username': req.body.username, 'filename': req.body.filename}
+
+	/*PersonSchema.update({'username': req.body.username}, update, function(err, numAffected){
 		if(err){
 			console.log(err);
 			res.json({'msg': "Update failed!"});
 		}
 		console.log(numAffected);
 		res.json({'msg': numAffected + " records updated"});
+
+		if(numAffected > 0){
+
+		}
+	});*/
+	
+	var file = {
+		'username': req.body.username,
+		'filename': req.body.filename,
+		'date': req.body.date
+	}
+	var files = new FileSchema(file);
+
+	files.save(files, function(err, doc){
+		
+		if(err){
+			console.log(err);
+			res.json(err);
+		}
+		console.log("Saved: " + doc);
+		
+		if(doc !== null || doc !== undefined){
+
+			FileSchema.update(query, update, function(err, numAffected){
+				if(err){
+					console.log(err);
+					res.json({'msg': "Update failed!"});
+				}
+				console.log(numAffected);
+				res.json({'msg': numAffected + " records updated"});
+
+			});
+		}
+		//res.json(doc);
 	});
+
 });
 
 
 router.get('/files/:username', function(req, res, next){
 
-	PersonSchema.find({'username': req.params.username}, function(err, data){
+	/*PersonSchema.find({'username': req.params.username}, function(err, data){
 
 		console.log("****************************"+req.params.username);
 		if(err){
@@ -114,12 +155,25 @@ router.get('/files/:username', function(req, res, next){
 		if(data !== null){
 			res.json({'message': data});
 		}
-	});
+	});*/
+
+	FileSchema.find({'username': req.params.username}, function(err, data){
+
+		console.log("****************************"+req.params.username);
+		if(err){
+			res.json({'message': err});
+		}
+
+		if(data !== null){
+			console.log(data);
+			res.json({'message': data});
+		}
+	});	
 });
 
 /* ================================ Tasks list for a user ================================ */
 
-router.get('/tasks/:username', ensureAuthenticated, function(req, res, next){
+router.get('/tasks/:username', function(req, res, next){
 
 	PersonSchema.find({'username': req.params.username}, function(err, data) { 
 		if(err) {
@@ -128,13 +182,16 @@ router.get('/tasks/:username', ensureAuthenticated, function(req, res, next){
 		}
 
 		if(data !== null){
-			res.json({'message': data});
+			//console.log(data[0].tasks);
+			res.json({'message': data[0].tasks});
 		}
 	});
 });
 
+
 /* ================================ Get statistics form raw file =========================*/
 
+// this API creates a data statistics job and updates the task metadata in user's profile, the task metadata is received from the Python flask server
 //ensure user is authenticated to use this API
 router.get('/files/:filename/statistics', ensureAuthenticated, function(req, res, next){
 
@@ -142,13 +199,13 @@ router.get('/files/:filename/statistics', ensureAuthenticated, function(req, res
 	.header('Accept', 'application/json')
 	//.send({'msg': 'hello there!'})
 	.end(function(response){
-		//console.log(response);
-		console.log(response.headers['location']);
 		// return a json response with task status url, task id, task name
 		var responsedata = {
 			'taskname': 'Raw Data Statistics',
-			'statusurl': response.headers['location'],
-			'taskid': response.body.task_id
+			'statusurl': response.headers['location'], // tracking url for task status
+			'taskid': response.body.task_id,
+			'dataset': req.params.filename,
+			'created': getToday()
 		}
 
 		//update task details in user profile
@@ -166,5 +223,15 @@ router.get('/files/:filename/statistics', ensureAuthenticated, function(req, res
 		res.json(responsedata);
 	})
 });
+
+
+/* =============== UTILITY ============ */
+function getToday(){
+
+	var today = new Date();
+	var date = today.getMonth() + "/" + today.getDate() + "/" + today.getYear() + " " + today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+
+	return date;
+}
 
 module.exports = router;
